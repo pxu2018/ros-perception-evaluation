@@ -5,7 +5,7 @@ from eval_utils import eval_object
 
     
 
-def get_csv(file_name):
+def get_csv(file_name,detection = False):
 
     objects = [] 
 
@@ -15,6 +15,7 @@ def get_csv(file_name):
 
         frame = f['frame'][i]
         id = f['id'][i]
+        type = f['type'][i]
         alpha = f['alpha'][i]
         (left,top) = (f['left'][i],f['top'][i])
         (right,bottom) = (f['right'][i],f['bottom'][i])
@@ -23,7 +24,11 @@ def get_csv(file_name):
         rot = f['rotation_z'][i]
         t = f['timestamp'][i]
 
-        objects.append(eval_object(frame,id,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,t))
+        if detection == True:
+            score = f['score'][i]
+            objects.append(eval_object(frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,t,score))
+        else:
+            objects.append(eval_object(frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,t))
 
   
     return objects

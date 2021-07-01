@@ -7,9 +7,10 @@ from geometric_utils import create_3d_bbox, calc_distance_2d
 
 
 class eval_object():
-    def __init__(self,frame,id,alpha,left,top,right,bottom,h,w,l,x,y,z,rotation,timestamp):
+    def __init__(self,frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rotation,timestamp,score = None):
         self.frame = frame
         self.id = id
+        self.type = type
         self.bbox2d = [(left,top),(right,bottom)]
         self.dim = [h,w,l]
         self.loc = [x,y,z]
@@ -18,29 +19,28 @@ class eval_object():
         self.timestamp = timestamp
         self.distance = 100
         self.status = 0
+        self.score = score
 
     def __str__(self):
         return("Frame:{} Id:{} Loc:{} Status:{}".format(self.frame,self.id,self.loc,self.status))
 
-    def asociate_detected_object(self,object,dis):
+    def asociate_object(self,object):
 
-        # Only used in gt objects to save the correspondent detection
         # We use the minimum distance to asociate the ground-truth with a detection
 
-        if dis < self.distance: 
-            self.det_id = object.id
-            self.det_bbox2d = object.bbox2d
-            self.det_dim = object.dim
-            self.det_loc = object.loc
-            self.det_alpha = object.alpha
-            self.det_rotation = object.rotation
-            self.distance = dis
-            self.set_status()
-            return 1
-        else:
-            return 0
+        self.det_id = object.id
+        self.det_bbox2d = object.bbox2d
+        self.det_dim = object.dim
+        self.det_loc = object.loc
+        self.det_alpha = object.alpha
+        self.det_rotation = object.rotation
+        self.set_status()
+ 
   
     def set_status(self):
+
+        # 0 if not associated (FN or FP), 1 if TP
+
         self.status = 1
   
 
@@ -95,5 +95,73 @@ def iou_dist_3d(obj1,obj2):
     d = calc_distance_2d((obj1.loc[0],obj1.loc[1]),(obj2.loc[0],obj2.loc[1]))
  
     return iou,d
+
+
+def get_status(list):
+
+    # Returns status and score of a detection list
     
+    f1 = lambda x: x.status
+    vectorized_f = np.vectorize(f1)
+
+    f2 = lambda x: x.score
+    vectorized_f2 = np.vectorize(f2)
+
+    f3 = lambda x: x.type
+    vectorized_f3 = np.vectorize(f3)
+
+    return np.vstack((vectorized_f(list),vectorized_f2(list),vectorized_f3(list)))
+
+
+
+class info_classes():
+
+    # For each class we save a list of [TP , totatl number of detections] to calculate AP (FP = total - TP)
+
+    def __init__(self):
+        self.names = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
+        self.Unknown = [0,0]
+        self.Unknown_Small = [0,0]
+        self.Unknown_Medium = [0,0]
+        self.Unknown_Big = [0,0]
+        self.Pedestrian = [0,0]
+        self.Bike = [0,0]
+        self.Car = [0,0]
+        self.Truck = [0,0]
+        self.Motorcycle = [0,0]
+        self.Other_Vehicle = [0,0]
+        self.Barrier = [0,0]
+        self.Sign = [0,0]
+
+    def calculate_AP_mAP(self):
+        
+        AP = []
+        for name in self.names:
+    
+            val = getattr(self,name)
+            TP = val[0]
+            total_det = val[1]
+            FP = total_det - TP
+        
+            if (TP+FP) != 0:
+                AP.append(float(TP/(TP+FP)))   
+            else:
+                AP.append(float(0)) 
+
+        mAP = sum(AP)/len(AP)
+
+        return np.transpose(np.vstack((self.names,AP))),mAP
+        
+
+
+
+
+
+
+
+
+        
+
+
+
 

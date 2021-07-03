@@ -22,13 +22,14 @@ def get_csv(file_name,detection = False):
         (h,w,l) = (f['h'][i],f['w'][i],f['l'][i])
         (x,y,z) = (f['x'][i],f['y'][i],f['z'][i])
         rot = f['rotation_z'][i]
+        (vx,vy) = (f['vx'][i],f['vy'][i])
         t = f['timestamp'][i]
 
         if detection == True:
             score = f['score'][i]
-            objects.append(eval_object(frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,t,score))
+            objects.append(eval_object(frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,vx,vy,t,score))
         else:
-            objects.append(eval_object(frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,t))
+            objects.append(eval_object(frame,id,type,alpha,left,top,right,bottom,h,w,l,x,y,z,rot,vx,vy,t))
 
   
     return objects

@@ -2,10 +2,11 @@ import io
 import time 
 import os
 import numpy as np
+from numpy.core.fromnumeric import ptp
 
 
 from file_utils import get_csv
-from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status
+from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_error
 
 CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
 
@@ -42,15 +43,19 @@ def main():
                 associate_index = i
                 d_min = distance
 
+                vel_error = calc_vel_error(gt.v,el.v)
+                asoc_iou = iou3d
+                asoc_d = distance
+
+
         if associate_index is not None and elements[associate_index].status == 0:
-            gt.asociate_object(elements[associate_index])
-            elements[associate_index].asociate_object(gt)
+            gt.asociate_object(elements[associate_index],asoc_iou,asoc_d,vel_error)
+            elements[associate_index].asociate_object(gt,asoc_iou,asoc_d,vel_error)
 
             
     det_status = get_status(elements)
     det_status = np.flip(det_status[:,det_status[1,:].argsort()],axis = 1)
-   
-    
+  
     tp_fn = len(ground_tr)
     acc_TP = 0
     acc_FP = 0
@@ -62,10 +67,10 @@ def main():
 
         name = det_status[2,i]
 
-        # Update number of detections of the detected class
+        # Update number of detections and statistics of the detected class
 
         value = np.array(getattr(classes_data,name))
-        new_val = (value + np.array([0,1])).tolist()
+        new_val = (value + np.array([0,1,0,0])).tolist()
         setattr(classes_data,name,new_val)
 
         # If the detection is asociated with a gt, it is a TP (update the value in the data class), if not it is a FP
@@ -73,9 +78,9 @@ def main():
         if int(det_status[0,i]) == 1:
 
             acc_TP = acc_TP + 1
-
+        
             value = getattr(classes_data,name)
-            new_val = (value + np.array([1,0])).tolist()
+            new_val = (value + np.array([1,0,float(det_status[3,i]),float(det_status[5,i])])).tolist()
             setattr(classes_data,name,new_val)
 
         else:
@@ -85,14 +90,15 @@ def main():
         recall.append(acc_TP/tp_fn)
 
 
-    AP_list,mAP = classes_data.calculate_AP_mAP()
+    value_mat,mAP = classes_data.calculate_AP_mAP()
+    
     
 
     print("RESULTS"+os.linesep)
     print("Total:"+os.linesep+"TP:{}  FP:{}  FN:{}".format(acc_TP,acc_FP,(tp_fn-acc_TP)))
     print("Precision values:{}  Recall values:{}".format(precision,recall)+os.linesep)
-    print("Classes" + os.linesep + "mAP:{}".format(mAP)+ os.linesep + "{}".format(AP_list))
-
+    print("Classes" + os.linesep + "mAP:{}".format(mAP)+ os.linesep +"AP | mIoU | mAVE for each class:"+os.linesep+"{}".format(value_mat)+os.linesep)
+    
       
 
 

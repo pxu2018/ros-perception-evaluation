@@ -2,6 +2,8 @@ import io
 import time 
 import os
 import numpy as np
+import matplotlib.pyplot as plt
+
 from numpy.core.fromnumeric import ptp
 
 
@@ -35,17 +37,19 @@ def main():
 
             el = elements[i]
 
-            iou2d, poly = iou_2d(gt.bbox2d,el.bbox2d)
-            iou3d, distance = iou_dist_3d(gt,el)
+            if el.timestamp == gt.timestamp: ##Falta asociar con timestamp de ROS
 
-            if distance < DIST_THRESHOLD and iou2d > IOU2D_THRESHOLD and distance < d_min: ##Falta asociar con timestamp
-                
-                associate_index = i
-                d_min = distance
+                iou2d, poly = iou_2d(gt.bbox2d,el.bbox2d)
+                iou3d, distance = iou_dist_3d(gt,el)
 
-                vel_error = calc_vel_error(gt.v,el.v)
-                asoc_iou = iou3d
-                asoc_d = distance
+                if distance < DIST_THRESHOLD and iou2d > IOU2D_THRESHOLD and distance < d_min: 
+                    
+                    associate_index = i
+                    d_min = distance
+
+                    vel_error = calc_vel_error(gt.v,el.v)
+                    asoc_iou = iou3d
+                    asoc_d = distance
 
 
         if associate_index is not None and elements[associate_index].status == 0:
@@ -92,7 +96,11 @@ def main():
 
     value_mat,mAP = classes_data.calculate_AP_mAP()
     
-    
+    plt.plot(recall, precision)
+    plt.title('Precision-recall curve')
+    plt.ylabel('Precision')
+    plt.xlabel('Recall')
+    plt.show()
 
     print("RESULTS"+os.linesep)
     print("Total:"+os.linesep+"TP:{}  FP:{}  FN:{}".format(acc_TP,acc_FP,(tp_fn-acc_TP)))

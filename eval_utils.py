@@ -72,8 +72,8 @@ def iou_2d(box1,box2):
     poly2 = Polygon([a2,b2,c2,d2])
 
     iou = poly1.intersection(poly2).area / poly1.union(poly2).area
-    intersect_polygon = poly1.intersection(poly2).exterior.coords[:-1]
-    return iou, intersect_polygon
+    
+    return iou
  
 
 def iou_dist_3d(obj1,obj2):
@@ -178,7 +178,10 @@ class info_classes():
                 IoU.append(float(0))
                 VE.append(float(0))
 
-        mAP = sum(AP)/len(AP)
+        
+        v = np.vectorize(lambda x: x > 0)
+
+        mAP = sum(AP)/sum(v(AP))
 
         return np.transpose(np.vstack((self.names,AP,IoU,VE))),mAP
 

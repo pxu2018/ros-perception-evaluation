@@ -12,8 +12,8 @@ from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_e
 
 CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
 
-FILE_NAME = "/UwU.csv"
-GT_FILE = "/UwU_gt.csv"
+FILE_NAME = "/prueba_det.csv"
+GT_FILE = "/prueba_kitti.csv"
 
 DIST_THRESHOLD = 1
 IOU2D_THRESHOLD = 0.5
@@ -25,10 +25,14 @@ def main():
     elements = get_csv(os.getcwd()+ FILE_NAME,detection=True)
     ground_tr = get_csv(os.getcwd()+ GT_FILE)
     
+    id = 0
 
     # Iterations with gt instead of detections (podría ser que la detección mas cercana de 2 gt sea la misma, para esos casos se configura el threshold de distancia al gt)
 
     for gt in ground_tr:
+
+        print(id)
+        id = id +1
 
         d_min = 50
         associate_index = None
@@ -39,7 +43,7 @@ def main():
 
             if el.timestamp == gt.timestamp: ##Falta asociar con timestamp de ROS
 
-                iou2d, poly = iou_2d(gt.bbox2d,el.bbox2d)
+                iou2d = iou_2d(gt.bbox2d,el.bbox2d)
                 iou3d, distance = iou_dist_3d(gt,el)
 
                 if distance < DIST_THRESHOLD and iou2d > IOU2D_THRESHOLD and distance < d_min: 

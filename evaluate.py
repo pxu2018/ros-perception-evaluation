@@ -12,8 +12,8 @@ from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_e
 
 CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
 
-FILE_NAME = "/prueba_det.csv"
-GT_FILE = "/prueba_kitti.csv"
+FILE_NAME = "/detections.csv"
+GT_FILE = "/kitti_gt.csv"
 
 DIST_THRESHOLD = 1
 IOU2D_THRESHOLD = 0.5

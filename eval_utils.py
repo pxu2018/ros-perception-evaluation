@@ -180,8 +180,10 @@ class info_classes():
 
         
         v = np.vectorize(lambda x: x > 0)
-
-        mAP = sum(AP)/sum(v(AP))
+        if sum(v(AP)) != 0:
+            mAP = sum(AP)/sum(v(AP))
+        else:
+            mAP = 0
 
         return np.transpose(np.vstack((self.names,AP,IoU,VE))),mAP
 

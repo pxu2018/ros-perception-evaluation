@@ -3,6 +3,7 @@ import time
 import os
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 from numpy.core.fromnumeric import ptp
 
@@ -12,23 +13,26 @@ from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_e
 
 CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
 
-FILE_NAME = "/detections.csv"
-GT_FILE = "/kitti_gt.csv"
+FILE_NAME = "/UwU.csv"
+GT_FILE = "/UwU_gt.csv"
 
 DIST_THRESHOLD = 1
-IOU2D_THRESHOLD = 0.5
+IOU3D_THRESHOLD = 0.4
+TIMESTAMP_RANGE = 0.05/2
 
 
 
 def main():
 
-    elements = get_csv(os.getcwd()+ FILE_NAME,detection=True)
-    ground_tr = get_csv(os.getcwd()+ GT_FILE)
+    elements = get_csv(os.getcwd()+ FILE_NAME,detection = True)
+    ground_tr = get_csv(os.getcwd()+ GT_FILE, Camera = True, Radar= False) # Fala filtrar Radar en caso de usarse
+
+    # Saber que sensor se está evaluando
+    # Si es LiDAR o radar se mantienen todas, si es cámara hay que filtrar los elementos que tengan -1 en las bbox 2d
     
     id = 0
 
-    # Iterations with gt instead of detections (podría ser que la detección mas cercana de 2 gt sea la misma, para esos casos se configura el threshold de distancia al gt)
-
+    # Iterations with gt instead of detections 
     for gt in ground_tr:
 
         print(id)
@@ -41,12 +45,14 @@ def main():
 
             el = elements[i]
 
-            if el.timestamp == gt.timestamp: ##Falta asociar con timestamp de ROS
+            if el.timestamp > (gt.timestamp - TIMESTAMP_RANGE) and el.timestamp < (gt.timestamp + TIMESTAMP_RANGE): # ROS timestamp association
 
                 iou2d = iou_2d(gt.bbox2d,el.bbox2d)
                 iou3d, distance = iou_dist_3d(gt,el)
+                print("Distance:{}".format(distance))
+                print("3DIoU: {}".format(iou3d))
 
-                if distance < DIST_THRESHOLD and iou2d > IOU2D_THRESHOLD and distance < d_min: 
+                if distance <= DIST_THRESHOLD and iou3d > IOU3D_THRESHOLD and distance < d_min: 
                     
                     associate_index = i
                     d_min = distance
@@ -100,26 +106,18 @@ def main():
 
     value_mat,mAP = classes_data.calculate_AP_mAP()
     
-    plt.plot(recall, precision)
-    plt.title('Precision-recall curve')
-    plt.ylabel('Precision')
-    plt.xlabel('Recall')
-    plt.show()
+    # plt.plot(recall, precision)
+    # plt.title('Precision-recall curve')
+    # plt.ylabel('Precision')
+    # plt.xlabel('Recall')
+    # plt.show()
 
     print("RESULTS"+os.linesep)
     print("Total:"+os.linesep+"TP:{}  FP:{}  FN:{}".format(acc_TP,acc_FP,(tp_fn-acc_TP)))
-    print("Precision values:{}  Recall values:{}".format(precision,recall)+os.linesep)
+    #print("Precision values:{}  Recall values:{}".format(precision,recall)+os.linesep)
     print("Classes" + os.linesep + "mAP:{}".format(mAP)+ os.linesep +"AP | mIoU | mAVE for each class:"+os.linesep+"{}".format(value_mat)+os.linesep)
     
       
-
-
-
-
-
-
-
-
 
 
 if __name__ == "__main__":

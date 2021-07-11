@@ -13,8 +13,8 @@ def rotation_mat(angle):
 
     # Creates a rotation matrix around the height axis (y in camera and z in lidar)
 
-    sin = math.sin(angle)
-    cos = math.cos(angle)
+    sin = math.sin(angle-np.pi)
+    cos = math.cos(angle-np.pi)
     rot = np.vstack(([cos,-sin,0],[sin,cos,0],[0,0,1]))
 
     return rot
@@ -28,10 +28,10 @@ def create_3d_bbox(object):
     (h,w,l) = (object.dim[0],object.dim[1],object.dim[2])
     (x,y,z) = (object.loc[0],object.loc[1],object.loc[2])
 
-    cube = np.vstack(([-l/2,-l/2,l/2,l/2,-l/2,-l/2,l/2,l/2],[w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2],[-h/2,-h/2,-h/2,-h/2,h/2,h/2,h/2,h/2]))
+    cube = np.vstack(([w/2,-w/2,-w/2,w/2,w/2,-w/2,-w/2,w/2],[-l/2,-l/2,l/2,l/2,-l/2,-l/2,l/2,l/2],[-h/2,-h/2,-h/2,-h/2,h/2,h/2,h/2,h/2]))
     offset = np.vstack((np.full((1,8),x),np.full((1,8),y),np.full((1,8),z)))  
-
     box = np.matmul(rot,cube) + offset
+  
 
     return box
 

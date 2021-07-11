@@ -13,11 +13,14 @@ from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_e
 
 CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
 
-FILE_NAME = "/UwU.csv"
-GT_FILE = "/UwU_gt.csv"
+# FILE_NAME = "/csv/UwU.csv"
+# GT_FILE = "/csv/UwU_gt.csv"
 
-DIST_THRESHOLD = 1
-IOU3D_THRESHOLD = 0.4
+FILE_NAME = "/csv/ROS_det.csv"
+GT_FILE = "/csv/groundtruth.csv"
+
+DIST_THRESHOLD = 2
+IOU3D_THRESHOLD = 0.2
 TIMESTAMP_RANGE = 0.05/2
 
 
@@ -35,7 +38,6 @@ def main():
     # Iterations with gt instead of detections 
     for gt in ground_tr:
 
-        print(id)
         id = id +1
 
         d_min = 50
@@ -51,6 +53,7 @@ def main():
                 iou3d, distance = iou_dist_3d(gt,el)
                 print("Distance:{}".format(distance))
                 print("3DIoU: {}".format(iou3d))
+                # print("2DIoU: {}".format(iou2d))
 
                 if distance <= DIST_THRESHOLD and iou3d > IOU3D_THRESHOLD and distance < d_min: 
                     

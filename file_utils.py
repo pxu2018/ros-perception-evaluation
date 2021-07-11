@@ -10,14 +10,15 @@ def get_csv(file_name,detection = False,Camera = False, Radar = False):
     objects = [] 
 
     f = pandas.read_csv(file_name)
-
+    
     if Camera == True:
 
         # Eliminate the objects outside the camera range of view filtering
 
         filter = f['left']!=-1
         f = f[filter]
-
+        f = f.reset_index()
+        
     # elif Radar == True:
 
         # Filter based in range and angle
@@ -25,7 +26,7 @@ def get_csv(file_name,detection = False,Camera = False, Radar = False):
         # filter = 
         # f = f[filter]
 
-
+    
     for i in range(len(f)):
 
         frame = f['frame'][i]

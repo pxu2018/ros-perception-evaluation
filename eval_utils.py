@@ -1,5 +1,6 @@
 import math
 import numpy as np
+import matplotlib.pyplot as plt
 
 from shapely.geometry import Polygon
 
@@ -84,13 +85,22 @@ def iou_dist_3d(obj1,obj2):
     box3d_2 = create_3d_bbox(obj2)
     bird_poly1 = Polygon([(box3d_1[0,0],box3d_1[1,0]),(box3d_1[0,1],box3d_1[1,1]),(box3d_1[0,2],box3d_1[1,2]),(box3d_1[0,3],box3d_1[1,3])])
     bird_poly2 = Polygon([(box3d_2[0,0],box3d_2[1,0]),(box3d_2[0,1],box3d_2[1,1]),(box3d_2[0,2],box3d_2[1,2]),(box3d_2[0,3],box3d_2[1,3])])
+ 
+    # x,y = bird_poly1.exterior.xy
+    # plt.plot(y,x)
+    # x,y = bird_poly2.exterior.xy
+    # plt.plot(y,x)
+    # plt.show()
+
 
     #bird_inters_poly = bird_poly1.intersection(bird_poly2).exterior.coords[:-1]
     bird_inters = bird_poly1.intersection(bird_poly2).area
     
+    
     low = max([box3d_1[2,0],box3d_2[2,0]])
     top = min([box3d_1[2,4],box3d_2[2,4]])
     h = top-low
+    
 
     inter_volume = bird_inters*h
 
@@ -98,6 +108,7 @@ def iou_dist_3d(obj1,obj2):
     vol2 = abs(box3d_2[2,0]-box3d_2[2,4]) * bird_poly2.area
 
     iou = inter_volume/(vol1+vol2-inter_volume)
+    print(obj1.loc,obj2.loc)
 
     d = calc_distance_2d((obj1.loc[0],obj1.loc[1]),(obj2.loc[0],obj2.loc[1]))
  

@@ -35,7 +35,7 @@ def get_csv(file_name,detection = False,Camera = False, Radar = False):
         alpha = f['alpha'][i]
         (left,top) = (f['left'][i],f['top'][i])
         (right,bottom) = (f['right'][i],f['bottom'][i])
-        (h,w,l) = (f['size_z'][i],f['size_y'][i],f['size_x'][i])
+        (h,w,l) = (f['h'][i],f['w'][i],f['l'][i])
         (x,y,z) = (f['x'][i],f['y'][i],f['z'][i])
         rot = f['rotation_z'][i]
         (vx,vy) = (f['vx'][i],f['vy'][i])

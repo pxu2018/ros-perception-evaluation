@@ -7,13 +7,14 @@ from numpy.core.shape_base import block
 import pandas as pd
 
 from numpy.core.fromnumeric import ptp, size
+from sklearn.metrics import auc
 
 
-from file_utils import get_csv
+from file_utils import get_csv, get_gt_stats
 from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_error
 
 #CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
-CLASS_LIST = ["Pedestrian","Car"]
+CLASS_LIST = ["Car"]
 
 # FILE_NAME = "/home/robesafe/t4ac_ws/src/t4ac_carla_simulator/ad_devkit/databases/perception/lidar/detections.csv"
 # GT_FILE = "/home/robesafe/t4ac_ws/src/t4ac_carla_simulator/ad_devkit/databases/perception/groundtruth.csv"
@@ -28,8 +29,8 @@ TIMESTAMP_RANGE = 0.05/2
 
 # Only one sensor.
 
-LIDAR_SENSOR = True
-CAMERA_SENSOR = False
+LIDAR_SENSOR = False
+CAMERA_SENSOR = True
 RADAR_SENSOR = False
 
 
@@ -50,10 +51,9 @@ def main():
         recall = []
         mIoU = 0
         mAVE = 0
-        f = pd.read_csv(GT_FILE)
-        filter = f['type']==type
-        f = f[filter]
-        tp_fn = len(f)
+
+        tp_fn = get_gt_stats(GT_FILE, camera = CAMERA_SENSOR, obj_class = type)
+        print(tp_fn)
         print("Evaluating class {}".format(type))
 
         for threshold in CONF_THRESHOLD:
@@ -125,6 +125,7 @@ def main():
 
             P,R,IoU,AVE = classes_data.calculate_metrics(tp_fn,type)
             print(P)
+            print(R)
 
             precision.append(P)
             recall.append(R)
@@ -156,7 +157,7 @@ def main():
             #print("Precision values:{}  Recall values:{}".format(precision,recall)+os.linesep)
             
 
-    print("Total:"+os.linesep+"mAP:{}".format((acc_AP/1)))
+    print("Total:"+os.linesep+"mAP:{}".format(len(CLASS_LIST)))
 
 
 if __name__ == "__main__":

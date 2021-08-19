@@ -85,3 +85,21 @@ def get_csv(file_name, detection = False, Camera = False, Radar = False, Lidar =
   
     return objects
 
+
+def get_gt_stats(file_name, camera = False, obj_class = 'Car'):
+
+    f = pandas.read_csv(file_name)
+
+    if camera == True:
+
+        filter = f['left']!=-1
+        f = f[filter]
+        f = f.reset_index()
+
+    filter = f['type']== obj_class
+    f = f[filter]
+    f = f.reset_index()
+
+    return len(f)
+
+

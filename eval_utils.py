@@ -72,7 +72,12 @@ def iou_2d(box1,box2):
     poly1 = Polygon([a1,b1,c1,d1])
     poly2 = Polygon([a2,b2,c2,d2])
 
-    iou = poly1.intersection(poly2).area / poly1.union(poly2).area
+    if poly1.union(poly2).area != 0:
+
+        iou = poly1.intersection(poly2).area / poly1.union(poly2).area
+
+    else:
+        iou = 0
     
     return iou
  
@@ -85,33 +90,41 @@ def iou_dist_3d(obj1,obj2):
     box3d_2 = create_3d_bbox(obj2)
     bird_poly1 = Polygon([(box3d_1[0,0],box3d_1[1,0]),(box3d_1[0,1],box3d_1[1,1]),(box3d_1[0,2],box3d_1[1,2]),(box3d_1[0,3],box3d_1[1,3])])
     bird_poly2 = Polygon([(box3d_2[0,0],box3d_2[1,0]),(box3d_2[0,1],box3d_2[1,1]),(box3d_2[0,2],box3d_2[1,2]),(box3d_2[0,3],box3d_2[1,3])])
- 
-    # x,y = bird_poly1.exterior.xy
-    # plt.plot(y,x)
-    # x,y = bird_poly2.exterior.xy
-    # plt.plot(y,x)
-    # plt.show()
-
-
-    #bird_inters_poly = bird_poly1.intersection(bird_poly2).exterior.coords[:-1]
-    bird_inters = bird_poly1.intersection(bird_poly2).area
     
-    
-    low = max([box3d_1[2,0],box3d_2[2,0]])
-    top = min([box3d_1[2,4],box3d_2[2,4]])
-    h = top-low
-    
-
-    inter_volume = bird_inters*h
-
-    vol1 = abs(box3d_1[2,0]-box3d_1[2,4]) * bird_poly1.area
-    vol2 = abs(box3d_2[2,0]-box3d_2[2,4]) * bird_poly2.area
-
-    iou = inter_volume/(vol1+vol2-inter_volume)
-    print(obj1.loc,obj2.loc)
-
     d = calc_distance_2d((obj1.loc[0],obj1.loc[1]),(obj2.loc[0],obj2.loc[1]))
- 
+    #print(d)
+    
+    if d < 4:
+
+        # x,y = bird_poly1.exterior.xy
+        # plt.plot(y,x)
+        # x,y = bird_poly2.exterior.xy
+        # plt.plot(y,x)
+        # plt.show()
+
+        # print(box3d_1)
+        # print(box3d_2)
+
+        #bird_inters_poly = bird_poly1.intersection(bird_poly2).exterior.coords[:-1]
+        #print(bird_poly1.exterior.coords.xy)
+        bird_inters = bird_poly1.intersection(bird_poly2).area
+        
+        
+        low = max([box3d_1[2,0],box3d_2[2,0]])
+        top = min([box3d_1[2,4],box3d_2[2,4]])
+        h = np.abs(top-low)
+        
+
+        inter_volume = bird_inters*h
+
+        vol1 = abs(box3d_1[2,0]-box3d_1[2,4]) * bird_poly1.area
+        vol2 = abs(box3d_2[2,0]-box3d_2[2,4]) * bird_poly2.area
+
+        iou = inter_volume/(vol1+vol2-inter_volume)
+        #print(obj1.loc,obj2.loc)
+    else:
+        iou = 0
+
     return iou,d
 
 
@@ -122,29 +135,28 @@ def get_status(list):
     f1 = lambda x: x.status
     vectorized_f = np.vectorize(f1)
 
-    f2 = lambda x: x.score
+    f2 = lambda x: float(x.score)
     vectorized_f2 = np.vectorize(f2)
 
     f3 = lambda x: x.type
     vectorized_f3 = np.vectorize(f3)
 
-    f4 = lambda x: x.iou
+    f4 = lambda x: float(x.iou)
     vectorized_f4 = np.vectorize(f4)
     
-    f5 = lambda x: x.d
+    f5 = lambda x: float(x.d)
     vectorized_f5 = np.vectorize(f5)
 
-    f6 = lambda x: x.v_err
+    f6 = lambda x: float(x.v_err)
     vectorized_f6 = np.vectorize(f6)
    
-
     return np.vstack((vectorized_f(list),vectorized_f2(list),vectorized_f3(list),vectorized_f4(list),vectorized_f5(list),vectorized_f6(list)))
 
 
 
 class info_classes():
 
-    # For each class we save a list of [TP , totatl number of detections, accIoU, accVE] to calculate AP (FP = total - TP)
+    # For each class we save a list of [TP , total number of detections, accIoU, accVE] to calculate AP (FP = total - TP)
 
     def __init__(self):
         self.names = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
@@ -161,42 +173,35 @@ class info_classes():
         self.Barrier = [0,0,0,0]
         self.Sign = [0,0,0,0]
 
-    def calculate_AP_mAP(self):
+    def calculate_metrics(self,tp_fn,type):
         
-        AP = []
-        IoU = []
-        VE = []
+        val = getattr(self,type)
+        TP = val[0]
+        print("TP:{}".format(TP))
+        total_det = val[1]
+        FP = total_det - TP
 
-        for name in self.names:
-    
-            val = getattr(self,name)
-            TP = val[0]
-            total_det = val[1]
-            FP = total_det - TP
-
-            accIoU = float(val[2])
-            accVE = float(val[3])
-        
-            if (TP+FP) != 0:
-                AP.append(float(TP/(TP+FP)))   
-            else:
-                AP.append(float(0)) 
-
-            if TP != 0:
-                IoU.append(float(accIoU/TP))
-                VE.append(float(accVE/TP))
-            else:
-                IoU.append(float(0))
-                VE.append(float(0))
-
-        
-        v = np.vectorize(lambda x: x > 0)
-        if sum(v(AP)) != 0:
-            mAP = sum(AP)/sum(v(AP))
+        if (TP+FP) != 0:
+            precision = float(TP/(TP+FP))
         else:
-            mAP = 0
+            precision = float(0)
 
-        return np.transpose(np.vstack((self.names,AP,IoU,VE))),mAP
+        if tp_fn != 0:
+            recall = TP/tp_fn
+        else:
+            recall = 0
+
+        accIoU = float(val[2])
+        accVE = float(val[3])
+        
+        if TP != 0:
+            IoU = float(accIoU/TP)
+            VE = float(accVE/TP)
+        else:
+            IoU = float(0)
+            VE = float(0)
+
+        return precision,recall,IoU,VE
 
 
         

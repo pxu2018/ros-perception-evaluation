@@ -13,7 +13,7 @@ from file_utils import get_csv
 from eval_utils import info_classes, iou_2d, iou_dist_3d, get_status, calc_vel_error
 
 #CLASS_LIST = ["Unknown", "Unknown_Small","Unknown_Medium","Unknown_Big","Pedestrian", "Bike","Car", "Truck","Motorcycle", "Other_Vehicle","Barrier", "Sign"]
-CLASS_LIST = ["Car"]
+CLASS_LIST = ["Pedestrian","Car"]
 
 # FILE_NAME = "/home/robesafe/t4ac_ws/src/t4ac_carla_simulator/ad_devkit/databases/perception/lidar/detections.csv"
 # GT_FILE = "/home/robesafe/t4ac_ws/src/t4ac_carla_simulator/ad_devkit/databases/perception/groundtruth.csv"
@@ -22,8 +22,8 @@ FILE_NAME = "/home/miguel/TFG/perception-evaluation/csv/ROS_det.csv"
 GT_FILE = "/home/miguel/TFG/perception-evaluation/csv/groundtruth.csv"
 
 DIST_THRESHOLD = 2
-IOU3D_THRESHOLD = np.arange(0,1.1,0.05)
-#IOU3D_THRESHOLD = [0.4,0.5]
+CONF_THRESHOLD = np.arange(0,1.1,0.05)
+IOU3D_THRESHOLD = 0.2
 TIMESTAMP_RANGE = 0.05/2
 
 # Only one sensor.
@@ -56,7 +56,7 @@ def main():
         tp_fn = len(f)
         print("Evaluating class {}".format(type))
 
-        for threshold in IOU3D_THRESHOLD:
+        for threshold in CONF_THRESHOLD:
             
             elements = get_csv(FILE_NAME,detection = True,Camera = CAMERA_SENSOR,Radar = RADAR_SENSOR,Lidar=LIDAR_SENSOR,conf_threshold=threshold)
             print("Number of elements with {} threshold: {}".format(round(threshold,2),len(elements)))
@@ -80,7 +80,7 @@ def main():
                         # print("Time:{} {}".format(el.timestamp,gt.timestamp))
                         # print("Distance:{}".format(distance))
 
-                        if distance <= DIST_THRESHOLD and iou3d >= threshold and distance < d_min: 
+                        if distance <= DIST_THRESHOLD and iou3d >= IOU3D_THRESHOLD and distance < d_min: 
                             associate_index = i
                             d_min = distance
 
@@ -135,10 +135,11 @@ def main():
 
 
 
-        print(precision)
-        print(recall)
-       
-        AP = np.trapz(precision,recall)
+        # print(precision)
+        # print(recall)
+
+        #AP = np.trapz(precision,recall)
+        AP = auc(recall,precision)
         acc_AP = acc_AP + AP
 
         if AP != 0:
@@ -155,10 +156,7 @@ def main():
             #print("Precision values:{}  Recall values:{}".format(precision,recall)+os.linesep)
             
 
-    # print("Total:"+os.linesep+"TP:{}  FP:{}  FN:{} mAP:{}".format(acc_TP,acc_FP,(tp_fn-acc_TP),(acc_AP/1)))
-
-    
-      
+    print("Total:"+os.linesep+"mAP:{}".format((acc_AP/1)))
 
 
 if __name__ == "__main__":
